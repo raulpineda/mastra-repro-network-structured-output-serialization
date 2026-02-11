@@ -1,0 +1,21 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@mastra/core": "1.2.0",
+    "@mastra/express": "latest",
+    "@ai-sdk/openai": "^3.0.26",
+    "express": "^4.18.0",
+    "ai": "^6.0.78",
+    "dotenv": "^17.2.4",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

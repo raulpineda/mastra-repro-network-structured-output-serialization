@@ -1,0 +1,49 @@
+version: '3.8'
+name: mastra-network-repro
+
+services:
+  server:
+    image: node:24-alpine
+    working_dir: /app
+    environment:
+      - NODE_ENV=development
+      - PORT=4111
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml:ro
+      - ./package.json:/app/package.json:ro
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - ./apps/server:/app/apps/server
+    ports:
+      - "4111:4111"
+    command: >
+      sh -c "
+        corepack enable &&
+        corepack prepare pnpm@10.0.0 --activate &&
+        pnpm install --frozen-lockfile &&
+        pnpm --filter server run dev
+      "
+
+  client:
+    image: node:24-alpine
+    working_dir: /app
+    environment:
+      - NODE_ENV=development
+      - MASTRA_SERVER_URL=http://server:4111
+    volumes:
+      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml:ro
+      - ./package.json:/app/package.json:ro
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - ./apps/client:/app/apps/client
+    depends_on:
+      - server
+    command: >
+      sh -c "
+        corepack enable &&
+        corepack prepare pnpm@10.0.0 --activate &&
+        pnpm install --frozen-lockfile &&
+        sleep 5 &&
+        pnpm --filter client run start
+      "

@@ -1,0 +1,24 @@
+{
+  "name": "mastra-network-repro",
+  "version": "1.0.0",
+  "description": "Reproduction case for mastra-ai/mastra#12284",
+  "private": true,
+  "type": "module",
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "repro": "tsx repro.ts",
+    "docker:up": "docker compose up",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:logs:server": "docker compose logs -f server",
+    "docker:logs:client": "docker compose logs -f client"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.0.0",
+  "devDependencies": {
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
