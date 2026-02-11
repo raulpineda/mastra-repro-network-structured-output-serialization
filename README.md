@@ -96,19 +96,18 @@ This repository provides a complete Docker-based reproduction that demonstrates 
 
 ## What Gets Tested
 
-The reproduction creates two Docker containers:
+The reproduction creates two Docker containers with a **minimal setup** to isolate the bug:
 
 ### Server Container (`apps/server`)
 - Runs a Mastra HTTP server using `@mastra/express`
-- Exposes an orchestrator agent with two sub-agents:
-  - **Research Agent**: Simulates web search
-  - **Math Agent**: Performs calculations
+- Exposes a minimal orchestrator agent with `.network()` capability
+- Has one simple sub-agent (no tools needed - bug occurs during routing)
 - Listens on port 4111
 
 ### Client Container (`apps/client`)
 - Uses `@mastra/client-js` to connect to the server
-- Makes a `.network()` call with structured output
-- Triggers the serialization that causes the bug
+- Makes a simple `.network()` call with structured output
+- Triggers HTTP serialization that causes the bug
 
 ### The Test Flow
 
@@ -119,21 +118,23 @@ Client Container                        Server Container
      ├──────────────────────────────────────▶│
      │                                       │
      │  2. Call .network() with              │
-     │     structuredOutput schema           │
+     │     structuredOutput                  │
      ├──────────────────────────────────────▶│
+     │     (Zod schema → JSON)               │
      │                                       │
-     │                                       │  3. Mastra routes to
-     │                                       │     sub-agents using
-     │                                       │     internal schemas
+     │                                       │  3. Deserialize request
+     │                                       │     (plain object, not Zod)
      │                                       │
-     │                                       │  4. Converts schemas
+     │                                       │  4. Start .network() routing
+     │                                       │     Convert internal schemas
      │                                       │     to JSON Schema
      │                                       │
-     │                                       │  5. Calls OpenAI API
+     │                                       │  5. Call OpenAI API with
+     │                                       │     routing schema
      │                                       ├─────────▶ OpenAI
      │                                       │
      │                                       │ ❌ 400 Error
-     │                                       │◀────────  (invalid schema)
+     │                                       │◀────────  (missing additionalProperties)
      │                                       │
      │  6. Error propagates back             │
      │◀──────────────────────────────────────┤

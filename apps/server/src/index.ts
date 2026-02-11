@@ -1,8 +1,8 @@
 /**
- * Mastra Server - Exposes agents via HTTP using Express adapter
+ * Minimal Mastra Server - Reproduces HTTP serialization bug
  *
- * This is where the bug occurs: when clients call .network() through HTTP,
- * the Zod schemas get serialized and lose their type information.
+ * This server exposes a single orchestrator agent via HTTP.
+ * The bug occurs when .network() is called through the HTTP client.
  */
 
 import "dotenv/config";
@@ -11,89 +11,35 @@ import { Mastra } from "@mastra/core";
 import { MastraServer } from "@mastra/express";
 import { Agent } from "@mastra/core/agent";
 import { MockMemory } from "@mastra/core/memory";
-import { createTool } from "@mastra/core/tools";
-import { z } from "zod";
 
-// Create memory for the agent network
+// Memory is required for .network() to work
 const memory = new MockMemory();
 
-// Simple tools using Mastra's createTool
-const calculateTool = createTool({
-  id: "calculate",
-  description: "Performs basic mathematical calculations",
-  inputSchema: z.object({
-    expression: z.string().describe("Mathematical expression to evaluate"),
-  }),
-  execute: async (inputData) => {
-    const { expression } = inputData;
-    const result = eval(expression);
-    return { result };
-  },
-});
-
-const searchTool = createTool({
-  id: "search",
-  description: "Searches for information",
-  inputSchema: z.object({
-    query: z.string().describe("Search query"),
-  }),
-  execute: async (inputData) => {
-    const { query } = inputData;
-    return {
-      results: [
-        `Result 1 for "${query}"`,
-        `Result 2 for "${query}"`,
-        `Result 3 for "${query}"`,
-      ],
-    };
-  },
-});
-
-// Research agent with search tool
-const researchAgent = new Agent({
-  name: "Research Agent",
-  description: "Searches for information and provides research findings.",
-  instructions:
-    "You are a research specialist. Use the search tool to find information.",
+// Minimal sub-agent - doesn't need tools since bug occurs during routing
+const subAgent = new Agent({
+  name: "Sub Agent",
+  description: "A minimal sub-agent for testing .network()",
+  instructions: "You are a helpful assistant.",
   model: "openai/gpt-4o-mini",
-  tools: {
-    search: searchTool,
-  },
 });
 
-// Math agent with calculation tool
-const mathAgent = new Agent({
-  name: "Math Agent",
-  description: "Solves mathematical problems and performs calculations.",
-  instructions:
-    "You are a mathematics expert. Use the calculate tool to solve math problems.",
-  model: "openai/gpt-4o-mini",
-  tools: {
-    calculate: calculateTool,
-  },
-});
-
-// Routing agent that uses .network() with specialized sub-agents
+// Orchestrator with .network() capability
 const orchestrator = new Agent({
   name: "Orchestrator",
-  description: "Routes requests to specialized sub-agents.",
-  instructions:
-    "You coordinate specialized sub-agents to answer questions. " +
-    "Delegate to the research agent for information lookups and the math agent for calculations.",
-  model: "openai/gpt-4o", // <-- model used for internal routing/completion schemas
-  memory, // <-- memory required for .network()
+  description: "Routes requests to sub-agents using .network()",
+  instructions: "Delegate tasks to the sub-agent.",
+  model: "openai/gpt-4o", // <-- This model is used for internal routing
+  memory, // <-- Required for .network()
   agents: {
-    researchAgent,
-    mathAgent,
+    subAgent, // <-- At least one sub-agent required for .network()
   },
 });
 
-// Create Mastra instance with agents
+// Create Mastra instance
 const mastra = new Mastra({
   agents: {
     orchestrator,
-    researchAgent,
-    mathAgent,
+    subAgent,
   },
 });
 
@@ -104,8 +50,8 @@ app.use(express.json());
 // Initialize Mastra server with Express adapter
 const PORT = process.env.PORT || 4111;
 
-console.log(`Starting Mastra server on port ${PORT}...`);
-console.log("Available agents: orchestrator, researchAgent, mathAgent");
+console.log(`Starting minimal Mastra server on port ${PORT}...`);
+console.log("Available agents: orchestrator, subAgent");
 console.log();
 
 // Create and initialize the Mastra server
@@ -114,12 +60,12 @@ await server.init();
 
 // Health check endpoint
 app.get("/health", (req, res) => {
-  res.json({ status: "ok", agents: ["orchestrator", "researchAgent", "mathAgent"] });
+  res.json({ status: "ok", agents: ["orchestrator", "subAgent"] });
 });
 
 // Start listening
 app.listen(PORT, () => {
   console.log(`✅ Mastra server running at http://localhost:${PORT}`);
-  console.log(`   Health check: http://localhost:${PORT}/health`);
   console.log(`   Ready to receive .network() calls from MastraClient`);
+  console.log(`   Bug will occur when orchestrator.network() is called over HTTP`);
 });
