@@ -4,7 +4,9 @@
   "description": "Reproduction case for mastra-ai/mastra#12284",
   "private": true,
   "type": "module",
-  "workspaces": ["apps/*"],
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "repro": "tsx repro.ts",
     "docker:up": "docker compose up",
@@ -20,5 +22,10 @@
   "devDependencies": {
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@mastra/client-js@1.2.0": "patches/@mastra__client-js@1.2.0.patch"
+    }
   }
 }
