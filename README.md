@@ -1,12 +1,3 @@
-# Mastra `.network()` OpenAI Schema Validation Bug
-
-> **Bug Status**: ❌ Reproduced in `@mastra/core@1.2.0`
-> **Issue**: [mastra-ai/mastra#12284](https://github.com/mastra-ai/mastra/issues/12284)
-
-A complete reproduction of a critical bug in Mastra's `.network()` functionality when using OpenAI models through the HTTP client interface.
-
----
-
 ## What's the Problem?
 
 When using Mastra's multi-agent `.network()` feature with OpenAI models through `@mastra/client-js` (HTTP client), requests fail with a schema validation error:
@@ -243,36 +234,17 @@ The `.network()` call:
 3. **Fails with 400 error** due to missing `additionalProperties: false`
 4. Never reaches the sub-agents
 
-## Impact
-
-This bug **blocks production deployments** that use:
-- ✅ Mastra's multi-agent `.network()` feature
-- ✅ OpenAI models (gpt-4, gpt-4o, etc.)
-- ✅ Client-server architecture (the recommended pattern)
 
 **Workarounds:**
 - Use `.generate()` or `.stream()` instead of `.network()` (loses multi-agent routing)
 - Use non-OpenAI models (e.g., Anthropic) if they don't enforce strict schema validation
-- Call agents directly in-process (not viable for distributed systems)
 
 ## Additional Information
 
 - **Root Cause**: Internal schemas lack `.strict()` + HTTP serialization loses Zod metadata
 - **OpenAI API Used**: Responses API (`/v1/responses`)
 - **Error Type**: Schema validation (400 Bad Request)
-- **Detailed Logs**: See [FINDINGS.md](./FINDINGS.md)
 
 ## Related Issues
 
-- [mastra-ai/mastra#12284](https://github.com/mastra-ai/mastra/issues/12284) - Original issue report
 
-## Contributing
-
-If you find issues with this reproduction or have insights into the bug:
-1. Open an issue in this repository
-2. Reference the original issue: mastra-ai/mastra#12284
-3. Include your environment details and test results
-
-## License
-
-ISC
